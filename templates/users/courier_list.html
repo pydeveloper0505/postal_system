@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Kuryerlar Reytingi{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4">
+  <i class="bi bi-star-fill text-warning me-2"></i>Kuryerlar Reytingi
+</h4>
+
+<div class="row g-4">
+  {% for courier in couriers %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+               style="width:48px;height:48px;font-size:1.2rem;flex-shrink:0;">
+            {{ courier.first_name|first|upper|default:courier.username|first|upper }}
+          </div>
+          <div>
+            <div class="fw-bold">
+              {{ courier.get_full_name|default:courier.username }}
+            </div>
+            <small class="text-muted">{{ courier.phone|default:"Telefon yo'q" }}</small>
+          </div>
+        </div>
+        {% if courier.courier_profile %}
+          {% if courier.courier_profile.status == 'free' %}
+            <span class="badge badge-free">Bo'sh</span>
+          {% else %}
+            <span class="badge badge-busy">Band</span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {% if courier.courier_profile %}
+      <!-- Rating stars -->
+      <div class="star-rating mb-2">
+        {% with rating=courier.courier_profile.rating %}
+        {% for i in "12345" %}
+          {% if forloop.counter <= rating %}
+            <i class="bi bi-star-fill" style="font-size:1.1rem;"></i>
+          {% elif forloop.counter|add:"-1" < rating %}
+            <i class="bi bi-star-half" style="font-size:1.1rem;"></i>
+          {% else %}
+            <i class="bi bi-star text-muted" style="font-size:1.1rem;"></i>
+          {% endif %}
+        {% endfor %}
+        {% endwith %}
+        <span class="ms-2 fw-bold">{{ courier.courier_profile.rating|floatformat:1 }}</span>
+        <span class="text-muted small">({{ courier.courier_profile.total_reviews }} baho)</span>
+      </div>
+
+      <!-- Stats -->
+      <div class="row g-2 mt-2">
+        <div class="col-4 text-center">
+          <div class="fw-bold text-primary">{{ courier.courier_profile.active_orders_count }}</div>
+          <small class="text-muted" style="font-size:.7rem;">Faol</small>
+        </div>
+        <div class="col-4 text-center border-start border-end">
+          <div class="fw-bold text-success">{{ courier.courier_profile.delivered_count }}</div>
+          <small class="text-muted" style="font-size:.7rem;">Yetkazgan</small>
+        </div>
+        <div class="col-4 text-center">
+          <div class="fw-bold text-warning">{{ courier.courier_profile.total_assigned_count }}</div>
+          <small class="text-muted" style="font-size:.7rem;">Jami</small>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-muted small">Ma'lumot yo'q</p>
+      {% endif %}
+
+      <div class="mt-3">
+        <a href="{% url 'users:courier-detail' courier.pk %}"
+           class="btn btn-outline-primary btn-sm w-100">
+          <i class="bi bi-person me-1"></i>Profilni Ko'rish
+        </a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info text-center">
+      Kuryerlar hali ro'yxatdan o'tmagan.
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -9,52 +9,71 @@ def generate_tracking_code():
 
 
 class Order(models.Model):
-    STATUS_PENDING          = 'pending'
-    STATUS_PICKED_UP        = 'picked_up'
-    STATUS_IN_TRANSIT       = 'in_transit'
-    STATUS_ARRIVED_BRANCH   = 'arrived_branch'
-    STATUS_OUT_FOR_DELIVERY = 'out_for_delivery'
-    STATUS_DELIVERED        = 'delivered'
-    STATUS_CANCELLED        = 'cancelled'
 
-    STATUS_CHOICES = [
-        (STATUS_PENDING,          'Pending'),
-        (STATUS_PICKED_UP,        'Picked Up'),
-        (STATUS_IN_TRANSIT,       'In Transit'),
-        (STATUS_ARRIVED_BRANCH,   'Arrived at Branch'),
-        (STATUS_OUT_FOR_DELIVERY, 'Out for Delivery'),
-        (STATUS_DELIVERED,        'Delivered'),
-        (STATUS_CANCELLED,        'Cancelled'),
+    class Status(models.TextChoices):
+        PENDING          = 'pending',          'Pending'
+        PICKED_UP        = 'picked_up',        'Picked Up'
+        IN_TRANSIT       = 'in_transit',       'In Transit'
+        ARRIVED_BRANCH   = 'arrived_branch',   'Arrived at Branch'
+        OUT_FOR_DELIVERY = 'out_for_delivery', 'Out for Delivery'
+        DELIVERED        = 'delivered',        'Delivered'
+        CANCELLED        = 'cancelled',        'Cancelled'
+
+    class DeliveryType(models.TextChoices):
+        BRANCH = 'branch', 'Branch Pickup'
+        HOME   = 'home',   'Home Delivery'
+
+    # Status progress order (for progress bar rendering)
+    STATUS_PROGRESS = [
+        Status.PENDING,
+        Status.PICKED_UP,
+        Status.IN_TRANSIT,
+        Status.ARRIVED_BRANCH,
+        Status.OUT_FOR_DELIVERY,
+        Status.DELIVERED,
     ]
 
-    DELIVERY_BRANCH = 'branch'
-    DELIVERY_HOME   = 'home'
-    DELIVERY_CHOICES = [
-        (DELIVERY_BRANCH, 'Branch Pickup'),
-        (DELIVERY_HOME,   'Home Delivery'),
-    ]
+    # Sender
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sent_orders',
+    )
 
-    # Relationships
-    sender   = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                 related_name='sent_orders')
+    # Receiver info
     receiver_name  = models.CharField(max_length=150)
     receiver_phone = models.CharField(max_length=20)
     receiver_email = models.EmailField(blank=True)
 
-    pickup_address   = models.ForeignKey(Address, on_delete=models.SET_NULL,
-                                         null=True, related_name='pickup_orders')
-    delivery_address = models.ForeignKey(Address, on_delete=models.SET_NULL,
-                                         null=True, blank=True, related_name='delivery_orders')
+    # Addresses
+    pickup_address = models.ForeignKey(
+        Address, on_delete=models.SET_NULL,
+        null=True, related_name='pickup_orders',
+    )
+    delivery_address = models.ForeignKey(
+        Address, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='delivery_orders',
+    )
 
-    # Parcel info
-    weight      = models.FloatField(help_text='Weight in kg')
-    description = models.TextField()
-    delivery_type = models.CharField(max_length=20, choices=DELIVERY_CHOICES,
-                                     default=DELIVERY_HOME)
+    # Parcel details
+    weight        = models.FloatField(help_text='Weight in kg')
+    description   = models.TextField()
+    delivery_type = models.CharField(
+        max_length=20,
+        choices=DeliveryType.choices,
+        default=DeliveryType.HOME,
+    )
+
+    # Insurance (Spetsifikatsiya 4: Safe & Insured)
+    is_insured = models.BooleanField(default=False)
 
     # Status & payment
-    status        = models.CharField(max_length=30, choices=STATUS_CHOICES,
-                                     default=STATUS_PENDING)
+    status        = models.CharField(
+        max_length=30,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
     price         = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_paid       = models.BooleanField(default=False)
     tracking_code = models.CharField(max_length=20, unique=True, blank=True)
@@ -73,27 +92,45 @@ class Order(models.Model):
         super().save(*args, **kwargs)
 
     def calculate_price(self):
-        """Simple price calculation: base + per-kg + delivery type fee."""
-        BASE    = 10000   # UZS
-        PER_KG  = 5000
-        HOME_FEE = 15000
+        BASE     = 10_000  # UZS
+        PER_KG   = 5_000
+        HOME_FEE = 15_000
+        INSURANCE_FEE = 5_000
         price = BASE + (self.weight * PER_KG)
-        if self.delivery_type == self.DELIVERY_HOME:
+        if self.delivery_type == self.DeliveryType.HOME:
             price += HOME_FEE
+        if self.is_insured:
+            price += INSURANCE_FEE
         return round(price, 2)
 
     def get_status_badge(self):
-        """Returns Bootstrap badge color for status."""
         mapping = {
-            self.STATUS_PENDING:          'warning',
-            self.STATUS_PICKED_UP:        'info',
-            self.STATUS_IN_TRANSIT:       'primary',
-            self.STATUS_ARRIVED_BRANCH:   'secondary',
-            self.STATUS_OUT_FOR_DELIVERY: 'info',
-            self.STATUS_DELIVERED:        'success',
-            self.STATUS_CANCELLED:        'danger',
+            self.Status.PENDING:          'warning',
+            self.Status.PICKED_UP:        'info',
+            self.Status.IN_TRANSIT:       'primary',
+            self.Status.ARRIVED_BRANCH:   'secondary',
+            self.Status.OUT_FOR_DELIVERY: 'info',
+            self.Status.DELIVERED:        'success',
+            self.Status.CANCELLED:        'danger',
         }
         return mapping.get(self.status, 'secondary')
+
+    @property
+    def progress_percent(self):
+        """0–100 for progress bar. Cancelled = 0."""
+        try:
+            idx = self.STATUS_PROGRESS.index(self.status)
+            return int((idx / (len(self.STATUS_PROGRESS) - 1)) * 100)
+        except ValueError:
+            return 0
+
+    @property
+    def is_active(self):
+        return self.status not in (self.Status.DELIVERED, self.Status.CANCELLED)
+
+    @property
+    def can_be_reviewed(self):
+        return self.status == self.Status.DELIVERED
 
     def __str__(self):
         return f'Order #{self.tracking_code} – {self.sender.username}'

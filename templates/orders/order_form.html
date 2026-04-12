@@ -1,26 +1,30 @@
 {% extends 'base.html' %}
-{% block title %}Create Order{% endblock %}
+{% block title %}Yuk Jo'natish{% endblock %}
 {% block content %}
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card p-4">
-                <h4 class="fw-bold mb-4"><i class="bi bi-plus-circle me-2 text-primary"></i>Create New Order</h4>
+                <h4 class="fw-bold mb-4">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>Yangi Buyurtma
+                </h4>
 
                 {% if not request.user.addresses.exists %}
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        You need to <a href="{% url 'users:address-add' %}">add an address</a> before creating an order.
+                        Buyurtma berish uchun avval
+                        <a href="{% url 'users:address-add' %}" class="fw-bold">manzil qo'shing</a>.
                     </div>
                 {% else %}
                     <form method="post">
                         {% csrf_token %}
-                        <h6 class="text-muted mb-3 mt-2">Receiver Information</h6>
+
+                        <h6 class="text-muted fw-semibold mb-3 mt-1">
+                            <i class="bi bi-person me-2"></i>Qabul Qiluvchi Ma'lumotlari
+                        </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">{{ form.receiver_name.label }}</label>
                                 {{ form.receiver_name }}
-                                {% if form.receiver_name.errors %}
-                                    <div class="text-danger small">{{ form.receiver_name.errors.as_text }}</div>{% endif %}
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">{{ form.receiver_phone.label }}</label>
@@ -32,15 +36,27 @@
                             </div>
                         </div>
 
-                        <h6 class="text-muted mb-3">Parcel Details</h6>
+                        <h6 class="text-muted fw-semibold mb-3">
+                            <i class="bi bi-box me-2"></i>Yuk Ma'lumotlari
+                        </h6>
                         <div class="row g-3 mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">{{ form.weight.label }}</label>
                                 {{ form.weight }}
+                                <small class="text-muted">kg da</small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">{{ form.delivery_type.label }}</label>
                                 {{ form.delivery_type }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold d-block">{{ form.is_insured.label }}</label>
+                                <div class="form-check form-switch mt-2">
+                                    {{ form.is_insured }}
+                                    <label class="form-check-label" for="{{ form.is_insured.id_for_label }}">
+                                        Sug'urta (+5,000 UZS) 🛡️
+                                    </label>
+                                </div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">{{ form.description.label }}</label>
@@ -48,33 +64,43 @@
                             </div>
                         </div>
 
-                        <h6 class="text-muted mb-3">Addresses</h6>
+                        <h6 class="text-muted fw-semibold mb-3">
+                            <i class="bi bi-geo-alt me-2"></i>Manzillar
+                        </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">{{ form.pickup_address.label }}</label>
                                 {{ form.pickup_address }}
+                                <small class="text-muted">Kuryer shu yerdan oladi</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">{{ form.delivery_address.label }}</label>
                                 {{ form.delivery_address }}
+                                <small class="text-muted">Home delivery uchun majburiy</small>
                             </div>
+                        </div>
+
+                        <!-- Price info -->
+                        <div class="alert alert-light border mb-4">
+                            <i class="bi bi-calculator me-2 text-primary"></i>
+                            <strong>Narx hisoblash:</strong>
+                            10,000 (asosiy) + 5,000 × kg + 15,000 (home delivery) + 5,000 (sug'urta)
                         </div>
 
                         {% if form.non_field_errors %}
                             <div class="alert alert-danger">{{ form.non_field_errors }}</div>
                         {% endif %}
-
-                        <!-- Price preview -->
-                        <div class="alert alert-info mb-4">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Price estimate:</strong> Base 10,000 + 5,000/kg + 15,000 (home delivery)
-                        </div>
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <div class="text-danger small mb-2">{{ field.label }}: {{ field.errors.as_text }}</div>
+                            {% endif %}
+                        {% endfor %}
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-send me-2"></i>Create Order
+                            <button type="submit" class="btn btn-primary fw-bold px-4">
+                                <i class="bi bi-send me-2"></i>Buyurtma Berish
                             </button>
-                            <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">Bekor</a>
                         </div>
                     </form>
                 {% endif %}

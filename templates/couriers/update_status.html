@@ -1,41 +1,64 @@
 {% extends 'base.html' %}
-{% block title %}Update Status{% endblock %}
+{% block title %}Status Yangilash{% endblock %}
 {% block content %}
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card p-4">
-                <h5 class="fw-bold mb-1"><i class="bi bi-arrow-up-circle me-2 text-primary"></i>Update Order Status</h5>
-                <p class="text-muted mb-4">Order <code>{{ object.order.tracking_code }}</code></p>
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card p-4">
+      <h5 class="fw-bold mb-1">
+        <i class="bi bi-arrow-up-circle me-2 text-primary"></i>Status Yangilash
+      </h5>
+      <p class="text-muted mb-4">
+        Buyurtma: <code class="text-primary fw-bold">{{ object.order.tracking_code }}</code>
+      </p>
 
-                <div class="alert alert-light border mb-4">
-                    <div class="row">
-                        <div class="col-6"><small class="text-muted">Current Status</small>
-                            <p class="fw-bold mb-0">
-                                <span class="badge bg-{{ object.order.get_status_badge }}">{{ object.order.get_status_display }}</span>
-                            </p>
-                        </div>
-                        <div class="col-6"><small class="text-muted">Receiver</small>
-                            <p class="fw-bold mb-0">{{ object.order.receiver_name }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">{{ form.status.label }}</label>
-                        {{ form.status }}
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">{{ form.notes.label }}</label>
-                        {{ form.notes }}
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary px-4">Update Status</button>
-                        <a href="{% url 'couriers:dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
+      <!-- Current status -->
+      <div class="alert alert-light border d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <small class="text-muted d-block">Hozirgi status</small>
+          <span class="badge bg-{{ object.order.get_status_badge }} fs-6">
+            {{ object.order.get_status_display }}
+          </span>
         </div>
+        <div class="text-end">
+          <small class="text-muted d-block">Qabul qiluvchi</small>
+          <span class="fw-semibold">{{ object.order.receiver_name }}</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="mb-4">
+        <div class="progress">
+          <div class="progress-bar bg-primary"
+               style="width:{{ object.order.progress_percent }}%"></div>
+        </div>
+        <small class="text-muted">{{ object.order.progress_percent }}% yakunlangan</small>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Yangi status:</label>
+          {{ form.status }}
+          {% if not form.status.field.choices %}
+            <div class="alert alert-warning mt-2 small">
+              Bu status uchun keyingi qadam yo'q.
+            </div>
+          {% endif %}
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Izoh (ixtiyoriy):</label>
+          {{ form.notes }}
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary px-4 fw-bold">
+            <i class="bi bi-check-circle me-2"></i>Yangilash
+          </button>
+          <a href="{% url 'couriers:dashboard' %}" class="btn btn-outline-secondary">
+            Bekor
+          </a>
+        </div>
+      </form>
     </div>
+  </div>
+</div>
 {% endblock %}

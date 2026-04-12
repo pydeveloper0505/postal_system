@@ -1,39 +1,50 @@
 {% extends 'base.html' %}
-{% block title %}Payment – {{ order.tracking_code }}{% endblock %}
+{% block title %}To'lov – {{ order.tracking_code }}{% endblock %}
 {% block content %}
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="card p-4 text-center">
-                <i class="bi bi-credit-card text-primary mb-3" style="font-size:3rem;"></i>
-                <h4 class="fw-bold mb-1">Confirm Payment</h4>
-                <p class="text-muted mb-4">Order <code>{{ order.tracking_code }}</code></p>
+                <i class="bi bi-credit-card-2-front text-primary mb-3" style="font-size:3.5rem;"></i>
+                <h4 class="fw-bold mb-1">To'lovni Tasdiqlang</h4>
+                <p class="text-muted mb-4">
+                    Buyurtma <code class="text-primary">{{ order.tracking_code }}</code>
+                </p>
 
                 <div class="bg-light rounded p-3 mb-4 text-start">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Weight</span><strong>{{ order.weight }} kg</strong>
+                        <span class="text-muted">Og'irlik</span>
+                        <strong>{{ order.weight }} kg</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Delivery</span><strong>{{ order.get_delivery_type_display }}</strong>
+                        <span class="text-muted">Yetkazish</span>
+                        <strong>{{ order.get_delivery_type_display }}</strong>
                     </div>
-                    <hr>
+                    {% if order.is_insured %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Sug'urta</span>
+                            <strong class="text-success">✓ Ha</strong>
+                        </div>
+                    {% endif %}
+                    <hr class="my-2">
                     <div class="d-flex justify-content-between">
-                        <span class="fw-bold">Total</span>
+                        <span class="fw-bold fs-5">Jami</span>
                         <span class="fw-bold text-primary fs-5">{{ order.price|floatformat:0 }} UZS</span>
                     </div>
                 </div>
 
                 <div class="alert alert-warning small text-start mb-4">
                     <i class="bi bi-info-circle me-1"></i>
-                    This is a <strong>simulated payment</strong>. No real transaction occurs.
+                    Bu <strong>simulyatsiya to'lov</strong> — haqiqiy tranzaksiya amalga oshirilmaydi.
                 </div>
 
                 <form method="post">
                     {% csrf_token %}
-                    <button class="btn btn-success w-100 btn-lg">
-                        <i class="bi bi-check-circle me-2"></i>Confirm Payment
+                    <button class="btn btn-success w-100 btn-lg fw-bold">
+                        <i class="bi bi-check-circle me-2"></i>To'lovni Tasdiqlash
                     </button>
                 </form>
-                <a href="{% url 'orders:detail' order.pk %}" class="btn btn-link text-muted mt-2">Cancel</a>
+                <a href="{% url 'orders:detail' order.pk %}"
+                   class="btn btn-link text-muted mt-2">Bekor qilish</a>
             </div>
         </div>
     </div>

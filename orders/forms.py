@@ -8,23 +8,27 @@ class OrderForm(forms.ModelForm):
         model  = Order
         fields = ('receiver_name', 'receiver_phone', 'receiver_email',
                   'pickup_address', 'delivery_address',
-                  'weight', 'description', 'delivery_type')
+                  'weight', 'description', 'delivery_type', 'is_insured')
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show addresses belonging to this user
         user_addresses = Address.objects.filter(user=user)
         self.fields['pickup_address'].queryset   = user_addresses
         self.fields['delivery_address'].queryset = user_addresses
         self.fields['delivery_address'].required = False
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
-        self.fields['delivery_type'].widget.attrs['class'] = 'form-select'
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'form-check-input'
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs['class'] = 'form-select'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
     def clean(self):
         cleaned = super().clean()
-        dtype   = cleaned.get('delivery_type')
-        daddr   = cleaned.get('delivery_address')
-        if dtype == Order.DELIVERY_HOME and not daddr:
-            raise forms.ValidationError('Home delivery requires a delivery address.')
+        if (cleaned.get('delivery_type') == Order.DeliveryType.HOME
+                and not cleaned.get('delivery_address')):
+            raise forms.ValidationError(
+                'Home delivery uchun yetkazish manzili kerak.'
+            )
         return cleaned

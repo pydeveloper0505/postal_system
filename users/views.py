@@ -1,11 +1,14 @@
-from django.views.generic import CreateView, UpdateView, ListView, View
+from django.views.generic import CreateView, UpdateView, ListView, CreateView, DetailView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import login
 from django.urls import reverse_lazy
-from django.shortcuts import redirect
-from .models import User, Address
-from .forms import RegisterForm, LoginForm, ProfileForm, AddressForm
+from django.shortcuts import redirect, get_object_or_404
+from django.db.models import Avg, Count
+
+from .models import User, Address, CourierProfile, CourierReview
+from .forms import RegisterForm, LoginForm, ProfileForm, AddressForm, CourierReviewForm
+from .mixins import SenderRequiredMixin, AdminRequiredMixin
 
 
 class RegisterView(CreateView):
@@ -48,10 +51,17 @@ class ProfileView(LoginRequiredMixin, UpdateView):
     def get_object(self):
         return self.request.user
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_courier:
+            ctx['courier_profile'] = getattr(user, 'courier_profile', None)
+        return ctx
+
 
 class AddressListView(LoginRequiredMixin, ListView):
-    model         = Address
-    template_name = 'users/address_list.html'
+    model               = Address
+    template_name       = 'users/address_list.html'
     context_object_name = 'addresses'
 
     def get_queryset(self):
@@ -66,7 +76,65 @@ class AddressCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        # If set as default, unset others
         if form.cleaned_data.get('is_default'):
             Address.objects.filter(user=self.request.user).update(is_default=False)
+        return super().form_valid(form)
+
+
+# ── Admin: Courier list ────────────────────────────────────────────────────────
+class CourierListView(AdminRequiredMixin, ListView):
+    """Admin sees all couriers with their status and rating."""
+    template_name       = 'users/courier_list.html'
+    context_object_name = 'couriers'
+
+    def get_queryset(self):
+        return User.objects.filter(role=User.Role.COURIER).select_related(
+            'courier_profile'
+        ).prefetch_related('assignments')
+
+
+class CourierDetailView(LoginRequiredMixin, DetailView):
+    """Public courier profile — visible to all authenticated users."""
+    model               = User
+    template_name       = 'users/courier_detail.html'
+    context_object_name = 'courier'
+
+    def get_queryset(self):
+        return User.objects.filter(role=User.Role.COURIER).select_related('courier_profile')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['reviews'] = self.object.received_reviews.select_related('sender', 'order')[:10]
+        return ctx
+
+
+# ── Sender: Leave review after delivery ───────────────────────────────────────
+class LeaveReviewView(SenderRequiredMixin, CreateView):
+    model         = CourierReview
+    form_class    = CourierReviewForm
+    template_name = 'users/leave_review.html'
+
+    def get_success_url(self):
+        return reverse_lazy('orders:detail', kwargs={'pk': self.kwargs['order_pk']})
+
+    def get_context_data(self, **kwargs):
+        from orders.models import Order
+        ctx = super().get_context_data(**kwargs)
+        ctx['order'] = get_object_or_404(
+            Order, pk=self.kwargs['order_pk'], sender=self.request.user
+        )
+        return ctx
+
+    def form_valid(self, form):
+        from orders.models import Order
+        order = get_object_or_404(
+            Order, pk=self.kwargs['order_pk'], sender=self.request.user
+        )
+        if not order.can_be_reviewed:
+            from django.contrib import messages
+            messages.error(self.request, 'Bu buyurtma uchun baho berish mumkin emas.')
+            return redirect('orders:detail', pk=order.pk)
+        form.instance.order   = order
+        form.instance.sender  = self.request.user
+        form.instance.courier = order.courier_assignment.courier
         return super().form_valid(form)

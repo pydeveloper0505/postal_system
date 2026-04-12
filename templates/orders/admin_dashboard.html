@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card stat-card p-3">
+                <div class="text-muted small">Jami Buyurtmalar</div>
+                <div class="fs-2 fw-bold text-primary">{{ total_orders }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card p-3" style="border-left:4px solid #f59e0b">
+                <div class="text-muted small">Kutayotgan</div>
+                <div class="fs-2 fw-bold text-warning">{{ pending_orders }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card p-3" style="border-left:4px solid #10b981">
+                <div class="text-muted small">Yetkazilgan</div>
+                <div class="fs-2 fw-bold text-success">{{ delivered_orders }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card p-3" style="border-left:4px solid #ef4444">
+                <div class="text-muted small">Tayinlanmagan</div>
+                <div class="fs-2 fw-bold text-danger">{{ unassigned_orders|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left: Unassigned orders -->
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h6 class="fw-bold mb-0">
+                        <i class="bi bi-exclamation-circle text-danger me-2"></i>
+                        Kuryer Tayinlanmagan Yuklar
+                    </h6>
+                    <span class="badge bg-danger">{{ unassigned_orders|length }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Tracking</th>
+                            <th>Jo'natuvchi</th>
+                            <th>Og'irlik</th>
+                            <th>Sana</th>
+                            <th>Kuryer Tayinlash</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for order in unassigned_orders %}
+                            <tr>
+                                <td><code class="text-primary fw-bold">{{ order.tracking_code }}</code></td>
+                                <td>
+                                    <div class="fw-semibold">{{ order.sender.get_full_name|default:order.sender.username }}</div>
+                                    <small class="text-muted">{{ order.sender.phone }}</small>
+                                </td>
+                                <td>{{ order.weight }} kg</td>
+                                <td class="text-muted small">{{ order.created_at|date:"d M, H:i" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#assignModal{{ order.pk }}">
+                                        <i class="bi bi-person-plus me-1"></i>Tayinlash
+                                    </button>
+
+                                    <!-- Assign Modal -->
+                                    <div class="modal fade" id="assignModal{{ order.pk }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h6 class="modal-title fw-bold">
+                                                        Kuryer Tayinlash — <code>{{ order.tracking_code }}</code>
+                                                    </h6>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form method="post" action="{% url 'orders:assign-courier' order.pk %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <label class="form-label fw-semibold">Kuryer tanlang:</label>
+                                                        <select name="courier_id" class="form-select mb-3" required>
+                                                            <option value="">— Kuryer tanlang —</option>
+                                                            {% for courier in couriers %}
+                                                                <option value="{{ courier.pk }}"
+                                                                        {% if courier.courier_profile.status == 'busy' %}disabled{% endif %}>
+                                                                    {{ courier.get_full_name|default:courier.username }}
+                                                                    ({% if courier.courier_profile %}
+                                                                    {{ courier.courier_profile.get_status_display }}
+                                                                    — ⭐
+                                                                    {{ courier.courier_profile.rating|floatformat:1 }}
+                                                                {% else %}yangi{% endif %})
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <label class="form-label fw-semibold">Izoh:</label>
+                                                        <textarea name="notes" class="form-control" rows="2"
+                                                                  placeholder="Ixtiyoriy..."></textarea>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                                data-bs-dismiss="modal">Bekor
+                                                        </button>
+                                                        <button type="submit" class="btn btn-primary btn-sm">
+                                                            <i class="bi bi-check me-1"></i>Tayinlash
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    Barcha yuklar tayinlangan
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Courier status list -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0">
+                        <i class="bi bi-people me-2 text-primary"></i>Kuryerlar Holati
+                    </h6>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for courier in couriers %}
+                        <li class="list-group-item px-3 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">
+                                        {{ courier.get_full_name|default:courier.username }}
+                                    </div>
+                                    <small class="text-muted">{{ courier.phone }}</small>
+                                </div>
+                                <div class="text-end">
+                                    {% if courier.courier_profile %}
+                                        <span class="badge {% if courier.courier_profile.status == 'busy' %}badge-busy{% else %}badge-free{% endif %} mb-1">
+                  {{ courier.courier_profile.get_status_display }}
+                </span><br>
+                                        <small class="text-muted">
+                                            ⭐{{ courier.courier_profile.rating|floatformat:1 }}
+                                            &nbsp;|&nbsp;
+                                            {{ courier.courier_profile.active_orders_count }} faol
+                                            &nbsp;|&nbsp;
+                                            {{ courier.courier_profile.delivered_count }} yetkazgan
+                                        </small>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Profil yo'q</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center text-muted py-4">Kuryerlar yo'q</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent orders table -->
+    <div class="card mt-4">
+        <div class="card-header bg-white py-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>So'nggi Buyurtmalar</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Tracking</th>
+                    <th>Jo'natuvchi</th>
+                    <th>Qabul qiluvchi</th>
+                    <th>Status</th>
+                    <th>Kuryer</th>
+                    <th>Sana</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in recent_orders %}
+                    <tr>
+                        <td><code class="text-primary">{{ order.tracking_code }}</code></td>
+                        <td>{{ order.sender.get_full_name|default:order.sender.username }}</td>
+                        <td>{{ order.receiver_name }}</td>
+                        <td>
+            <span class="badge bg-{{ order.get_status_badge }}">
+              {{ order.get_status_display }}
+            </span>
+                        </td>
+                        <td>
+                            {% if order.courier_assignment %}
+                                {{ order.courier_assignment.courier.get_full_name|default:order.courier_assignment.courier.username }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ order.created_at|date:"d M, H:i" }}</td>
+                        <td>
+                            <a href="{% url 'orders:detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

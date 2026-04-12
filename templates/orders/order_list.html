@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
-{% block title %}My Orders{% endblock %}
+{% block title %}Buyurtmalar{% endblock %}
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>
-            {% if request.user.is_courier %}Assigned Orders{% else %}My Orders{% endif %}
+        <h4 class="fw-bold mb-0">
+            <i class="bi bi-box-seam me-2 text-primary"></i>
+            {% if request.user.is_admin_user %}Barcha Buyurtmalar
+            {% elif request.user.is_courier %}Mening Buyurtmalarim
+            {% else %}Mening Yuklarim{% endif %}
         </h4>
         {% if request.user.is_sender %}
             <a href="{% url 'orders:create' %}" class="btn btn-primary">
-                <i class="bi bi-plus me-1"></i>New Order
+                <i class="bi bi-plus me-1"></i>Yangi Buyurtma
             </a>
         {% endif %}
     </div>
@@ -18,13 +21,17 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th>Tracking Code</th>
-                        <th>Receiver</th>
-                        <th>Weight</th>
+                        <th>Tracking</th>
+                        <th>Qabul qiluvchi</th>
+                        {% if request.user.is_admin_user %}
+                            <th>Jo'natuvchi</th>{% endif %}
+                        <th>Og'irlik</th>
                         <th>Status</th>
-                        <th>Price</th>
-                        <th>Paid</th>
-                        <th>Date</th>
+                        <th>Narx</th>
+                        <th>To'lov</th>
+                        {% if request.user.is_admin_user %}
+                            <th>Kuryer</th>{% endif %}
+                        <th>Sana</th>
                         <th></th>
                     </tr>
                     </thead>
@@ -32,12 +39,18 @@
                     {% for order in orders %}
                         <tr>
                             <td><code class="text-primary fw-bold">{{ order.tracking_code }}</code></td>
-                            <td>{{ order.receiver_name }}</td>
+                            <td>
+                                <div>{{ order.receiver_name }}</div>
+                                <small class="text-muted">{{ order.receiver_phone }}</small>
+                            </td>
+                            {% if request.user.is_admin_user %}
+                                <td>{{ order.sender.get_full_name|default:order.sender.username }}</td>
+                            {% endif %}
                             <td>{{ order.weight }} kg</td>
                             <td>
-              <span class="badge bg-{{ order.get_status_badge }} badge-status">
-                {{ order.get_status_display }}
-              </span>
+            <span class="badge bg-{{ order.get_status_badge }}">
+              {{ order.get_status_display }}
+            </span>
                             </td>
                             <td>{{ order.price|floatformat:0 }} UZS</td>
                             <td>
@@ -46,16 +59,30 @@
                                 {% else %}
                                     <i class="bi bi-x-circle-fill text-danger"></i>
                                 {% endif %}
+                                {% if order.is_insured %}
+                                    <i class="bi bi-shield-fill-check text-info ms-1" title="Sug'urtalangan"></i>
+                                {% endif %}
                             </td>
+                            {% if request.user.is_admin_user %}
+                                <td>
+                                    {% if order.courier_assignment %}
+                                        <span class="text-muted small">
+                {{ order.courier_assignment.courier.get_full_name|default:order.courier_assignment.courier.username }}
+              </span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Tayinlanmagan</span>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
                             <td class="text-muted small">{{ order.created_at|date:"d M Y" }}</td>
                             <td>
-                                <a href="{% url 'orders:detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                                <a href="{% url 'orders:detail' order.pk %}"
+                                   class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                {% if not order.is_paid and request.user.is_sender %}
-                                    <a href="{% url 'orders:payment' order.pk %}" class="btn btn-sm btn-warning ms-1">
-                                        Pay
-                                    </a>
+                                {% if not order.is_paid and request.user == order.sender %}
+                                    <a href="{% url 'orders:payment' order.pk %}"
+                                       class="btn btn-sm btn-warning ms-1">To'lash</a>
                                 {% endif %}
                             </td>
                         </tr>
@@ -65,17 +92,24 @@
             </div>
         </div>
 
-        <!-- Pagination -->
         {% if is_paginated %}
             <nav class="mt-4">
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link"
-                                                 href="?page={{ page_obj.previous_page_number }}">Prev</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
                     {% endif %}
-                    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
                     {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
@@ -83,11 +117,13 @@
         {% endif %}
 
     {% else %}
-        <div class="alert alert-info text-center py-5">
-            <i class="bi bi-box2 fs-1 d-block mb-3 text-muted"></i>
-            No orders yet.
+        <div class="card text-center py-5">
+            <i class="bi bi-box2 fs-1 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">Buyurtmalar yo'q</h5>
             {% if request.user.is_sender %}
-                <a href="{% url 'orders:create' %}" class="btn btn-primary ms-2">Create your first order</a>
+                <a href="{% url 'orders:create' %}" class="btn btn-primary mt-2">
+                    <i class="bi bi-plus me-1"></i>Birinchi buyurtmani yarating
+                </a>
             {% endif %}
         </div>
     {% endif %}

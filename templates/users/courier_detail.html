@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}{{ courier.get_full_name|default:courier.username }} – Profil{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <!-- Left: Profile card -->
+  <div class="col-md-4">
+    <div class="card p-4 text-center">
+      <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center
+                  text-white fw-bold mx-auto mb-3"
+           style="width:80px;height:80px;font-size:2.2rem;">
+        {{ courier.first_name|first|upper|default:courier.username|first|upper }}
+      </div>
+      <h5 class="fw-bold mb-1">{{ courier.get_full_name|default:courier.username }}</h5>
+      <p class="text-muted small mb-2">{{ courier.email }}</p>
+      {% if courier.phone %}
+        <p class="text-muted small mb-3">
+          <i class="bi bi-phone me-1"></i>{{ courier.phone }}
+        </p>
+      {% endif %}
+
+      {% if courier.courier_profile %}
+        {% if courier.courier_profile.status == 'free' %}
+          <span class="badge badge-free fs-6 mb-3">🟢 Bo'sh</span>
+        {% else %}
+          <span class="badge badge-busy fs-6 mb-3">🔴 Band</span>
+        {% endif %}
+
+        <!-- Big rating display -->
+        <div class="py-3 border rounded mb-3">
+          <div class="fs-2 fw-bold text-primary">
+            {{ courier.courier_profile.rating|floatformat:1 }}
+          </div>
+          <div class="star-rating mb-1">
+            {% for i in "12345" %}
+              <i class="bi bi-star-fill {% if forloop.counter > courier.courier_profile.rating %}text-muted{% endif %}"
+                 style="font-size:1.2rem;"></i>
+            {% endfor %}
+          </div>
+          <small class="text-muted">{{ courier.courier_profile.total_reviews }} ta baho</small>
+        </div>
+
+        <!-- Counters -->
+        <div class="row g-2">
+          <div class="col-4">
+            <div class="p-2 bg-light rounded">
+              <div class="fw-bold text-primary">{{ courier.courier_profile.active_orders_count }}</div>
+              <div style="font-size:.65rem;" class="text-muted">Faol</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2 bg-light rounded">
+              <div class="fw-bold text-success">{{ courier.courier_profile.delivered_count }}</div>
+              <div style="font-size:.65rem;" class="text-muted">Yetkazgan</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2 bg-light rounded">
+              <div class="fw-bold text-warning">{{ courier.courier_profile.total_assigned_count }}</div>
+              <div style="font-size:.65rem;" class="text-muted">Jami</div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: Reviews -->
+  <div class="col-md-8">
+    <div class="card p-4">
+      <h5 class="fw-bold mb-4">
+        <i class="bi bi-chat-square-text me-2 text-primary"></i>
+        Foydalanuvchi Baholari
+      </h5>
+      {% for review in reviews %}
+      <div class="border rounded p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <span class="fw-semibold">
+              {{ review.sender.get_full_name|default:review.sender.username }}
+            </span>
+            <code class="text-muted ms-2 small">{{ review.order.tracking_code }}</code>
+          </div>
+          <div class="star-rating">
+            {% for i in "12345" %}
+              <i class="bi bi-star-fill {% if forloop.counter > review.score %}text-muted{% endif %}"
+                 style="font-size:.9rem;"></i>
+            {% endfor %}
+            <span class="ms-1 fw-bold small">{{ review.score }}/5</span>
+          </div>
+        </div>
+        {% if review.comment %}
+          <p class="text-muted mb-1">{{ review.comment }}</p>
+        {% endif %}
+        <small class="text-muted">{{ review.created_at|date:"d M Y" }}</small>
+      </div>
+      {% empty %}
+      <div class="text-center text-muted py-4">
+        <i class="bi bi-chat-square fs-2 d-block mb-2"></i>
+        Hali baho berilmagan
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
