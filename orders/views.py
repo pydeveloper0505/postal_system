@@ -190,12 +190,12 @@ class AssignCourierView(AdminRequiredMixin, View):
 
         create_notification(
             user    = courier,
-            title   = 'Yangi yuk biriktirildi 🚚',
+            title   = 'Yangi yuk biriktirildi',
             message = f'#{order.tracking_code} buyurtma sizga biriktirildi.'
         )
         create_notification(
             user    = order.sender,
-            title   = 'Kuryeringiz tayinlandi 👤',
+            title   = 'Kuryeringiz tayinlandi',
             message = f'#{order.tracking_code} yukingizga kuryer tayinlandi: '
                       f'{courier.get_full_name() or courier.username}'
         )

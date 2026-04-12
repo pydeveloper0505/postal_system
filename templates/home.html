@@ -2,121 +2,121 @@
 {% block title %}UzPost – Uydan yuk jo'natish{% endblock %}
 {% block content %}
 
-<!-- Hero -->
-<div class="row align-items-center py-5 px-4 mb-4 mx-0"
-     style="background:linear-gradient(135deg,#0D3B6E 0%,#1A56A0 100%);
+    <!-- Hero -->
+    <div class="row align-items-center py-5 px-4 mb-4 mx-0"
+         style="background:linear-gradient(135deg,#0D3B6E 0%,#1A56A0 100%);
             border-radius:20px;color:#fff;">
-  <div class="col-md-7">
-    <span class="badge bg-warning text-dark mb-3">O'zbekiston #1 Kuryerlik Xizmati</span>
-    <h1 class="display-5 fw-bold mb-3">Uydan Yuk Jo'nating 📦</h1>
-    <p class="lead text-white-75 mb-4">
-      Kuryerimiz sizning manzilingizga kelib yukni olib ketadi va xavfsiz yetkazadi.
-      Har bir qadam real vaqtda kuzatiladi.
-    </p>
-    <div class="d-flex gap-3 flex-wrap">
-      {% if user.is_authenticated %}
-        {% if user.is_sender %}
-          <a href="{% url 'orders:create' %}" class="btn btn-warning btn-lg fw-bold">
-            <i class="bi bi-plus-circle me-2"></i>Yuk Jo'natish
-          </a>
-        {% elif user.is_courier %}
-          <a href="{% url 'couriers:dashboard' %}" class="btn btn-warning btn-lg fw-bold">
-            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-          </a>
-        {% elif user.is_admin_user %}
-          <a href="{% url 'orders:admin-dashboard' %}" class="btn btn-warning btn-lg fw-bold">
-            <i class="bi bi-grid me-2"></i>Admin Dashboard
-          </a>
-        {% endif %}
-      {% else %}
-        <a href="{% url 'users:register' %}" class="btn btn-warning btn-lg fw-bold">
-          Boshlash
-        </a>
-        <a href="{% url 'users:login' %}" class="btn btn-outline-light btn-lg">
-          Kirish
-        </a>
-      {% endif %}
-      <a href="{% url 'orders:track' %}" class="btn btn-outline-light btn-lg">
-        <i class="bi bi-search me-2"></i>Yuk Izlash
-      </a>
+        <div class="col-md-7">
+            <span class="badge bg-warning text-dark mb-3">O'zbekiston #1 Kuryerlik Xizmati</span>
+            <h1 class="display-5 fw-bold mb-3">Uydan Yuk Jo'nating 📦</h1>
+            <p class="lead text-white-75 mb-4">
+                Kuryerimiz sizning manzilingizga kelib yukni olib ketadi va xavfsiz yetkazadi.
+                Har bir qadam real vaqtda kuzatiladi.
+            </p>
+            <div class="d-flex gap-3 flex-wrap">
+                {% if user.is_authenticated %}
+                    {% if user.is_sender %}
+                        <a href="{% url 'orders:create' %}" class="btn btn-warning btn-lg fw-bold">
+                            <i class="bi bi-plus-circle me-2"></i>Yuk Jo'natish
+                        </a>
+                    {% elif user.is_courier %}
+                        <a href="{% url 'couriers:dashboard' %}" class="btn btn-warning btn-lg fw-bold">
+                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                        </a>
+                    {% elif user.is_admin_user %}
+                        <a href="{% url 'orders:admin-dashboard' %}" class="btn btn-warning btn-lg fw-bold">
+                            <i class="bi bi-grid me-2"></i>Admin Dashboard
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'users:register' %}" class="btn btn-warning btn-lg fw-bold">
+                        Boshlash
+                    </a>
+                    <a href="{% url 'users:login' %}" class="btn btn-outline-light btn-lg">
+                        Kirish
+                    </a>
+                {% endif %}
+                <a href="{% url 'orders:track' %}" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-search me-2"></i>Yuk Izlash
+                </a>
+            </div>
+        </div>
+        <div class="col-md-5 text-center d-none d-md-block">
+            <i class="bi bi-truck" style="font-size:9rem;opacity:.7;"></i>
+        </div>
     </div>
-  </div>
-  <div class="col-md-5 text-center d-none d-md-block">
-    <i class="bi bi-truck" style="font-size:9rem;opacity:.7;"></i>
-  </div>
-</div>
 
-<!-- Quick Track -->
-<div class="card mb-4">
-  <div class="card-body p-4">
-    <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2 text-primary"></i>Yukingizni Kuzating</h5>
-    <form method="get" action="{% url 'orders:track' %}" class="row g-2">
-      <div class="col-md-9">
-        <input name="code" class="form-control form-control-lg"
-               placeholder="Tracking kodni kiriting (masalan: UZA1B2C3D4)">
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-primary btn-lg w-100">
-          <i class="bi bi-search me-1"></i>Izlash
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+    <!-- Quick Track -->
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2 text-primary"></i>Yukingizni Kuzating</h5>
+            <form method="get" action="{% url 'orders:track' %}" class="row g-2">
+                <div class="col-md-9">
+                    <input name="code" class="form-control form-control-lg"
+                           placeholder="Tracking kodni kiriting (masalan: UZA1B2C3D4)">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-search me-1"></i>Izlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<!-- Feature cards -->
-<div class="row g-4 mb-4">
-  <div class="col-md-4">
-    <div class="card h-100 p-4 text-center">
-      <div class="mb-3">
-        <span style="font-size:3rem;">🏠</span>
-      </div>
-      <h5 class="fw-bold">Uydan Pickup</h5>
-      <p class="text-muted">
-        Kuryerimiz belgilangan vaqtda manzilingizga keladi va yukni olib ketadi.
-        Post ofisga borishning hojati yo'q.
-      </p>
+    <!-- Feature cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center">
+                <div class="mb-3">
+                    <span style="font-size:3rem;">🏠</span>
+                </div>
+                <h5 class="fw-bold">Uydan Pickup</h5>
+                <p class="text-muted">
+                    Kuryerimiz belgilangan vaqtda manzilingizga keladi va yukni olib ketadi.
+                    Post ofisga borishning hojati yo'q.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center border-warning" style="border-width:2px!important">
+                <div class="mb-3">
+                    <span style="font-size:3rem;">🛡️</span>
+                </div>
+                <h5 class="fw-bold">Xavfsiz & Sug'urtalangan</h5>
+                <p class="text-muted">
+                    Buyurtma yaratishda sug'urta xizmatini tanlang.
+                    Yukingiz yo'qolsa yoki shikastlansa, to'liq qoplanadi.
+                </p>
+                <span class="badge bg-warning text-dark">+5,000 UZS</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center">
+                <div class="mb-3">
+                    <span style="font-size:3rem;">📡</span>
+                </div>
+                <h5 class="fw-bold">Real-time Tracking</h5>
+                <p class="text-muted">
+                    Yukingiz Pending → Picked Up → In Transit → Delivered bosqichlarini
+                    jonli progress bar orqali kuzating.
+                </p>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card h-100 p-4 text-center border-warning" style="border-width:2px!important">
-      <div class="mb-3">
-        <span style="font-size:3rem;">🛡️</span>
-      </div>
-      <h5 class="fw-bold">Xavfsiz & Sug'urtalangan</h5>
-      <p class="text-muted">
-        Buyurtma yaratishda sug'urta xizmatini tanlang.
-        Yukingiz yo'qolsa yoki shikastlansa, to'liq qoplanadi.
-      </p>
-      <span class="badge bg-warning text-dark">+5,000 UZS</span>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card h-100 p-4 text-center">
-      <div class="mb-3">
-        <span style="font-size:3rem;">📡</span>
-      </div>
-      <h5 class="fw-bold">Real-time Tracking</h5>
-      <p class="text-muted">
-        Yukingiz Pending → Picked Up → In Transit → Delivered bosqichlarini
-        jonli progress bar orqali kuzating.
-      </p>
-    </div>
-  </div>
-</div>
 
-<!-- Courier ratings teaser -->
-<div class="card">
-  <div class="card-body p-4">
-    <div class="d-flex justify-content-between align-items-center">
-      <h5 class="fw-bold mb-0">
-        <i class="bi bi-star-fill text-warning me-2"></i>Kuryerlarimiz Reytingi
-      </h5>
-      <a href="{% url 'users:courier-list' %}" class="btn btn-outline-primary btn-sm">
-        Barchasini ko'rish
-      </a>
+    <!-- Courier ratings teaser -->
+    <div class="card">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-star-fill text-warning me-2"></i>Kuryerlarimiz Reytingi
+                </h5>
+                <a href="{% url 'users:courier-list' %}" class="btn btn-outline-primary btn-sm">
+                    Barchasini ko'rish
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
 {% endblock %}
