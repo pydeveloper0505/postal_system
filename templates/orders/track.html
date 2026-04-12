@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Track Parcel{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <h4 class="fw-bold mb-4"><i class="bi bi-geo-alt me-2 text-primary"></i>Track Your Parcel</h4>
+            <div class="card p-4 mb-4">
+                <form method="get">
+                    <div class="input-group input-group-lg">
+                        <input name="code" value="{{ code }}" class="form-control"
+                               placeholder="Enter tracking code e.g. UZA1B2C3D4">
+                        <button class="btn btn-primary px-4">Track</button>
+                    </div>
+                </form>
+            </div>
+
+            {% if order %}
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><code>{{ order.tracking_code }}</code></h5>
+                        <span class="badge bg-{{ order.get_status_badge }} fs-6">{{ order.get_status_display }}</span>
+                    </div>
+                    <p class="text-muted mb-1">Receiver: <strong>{{ order.receiver_name }}</strong></p>
+                    <p class="text-muted mb-3">Delivery: <strong>{{ order.get_delivery_type_display }}</strong></p>
+                    <hr>
+                    <!-- Visual progress bar -->
+                    {% with statuses='pending,picked_up,in_transit,arrived_branch,out_for_delivery,delivered' %}
+                        {% with status_list=statuses %}
+                            <div class="d-flex justify-content-between position-relative mb-2">
+                                <div class="position-absolute top-50 start-0 end-0 translate-middle-y"
+                                     style="height:3px;background:#dee2e6;z-index:0;"></div>
+                                {% for s in order.STATUS_CHOICES %}
+                                    {% if s.0 != 'cancelled' %}
+                                        <div class="text-center" style="z-index:1;flex:1;">
+                                            <div class="mx-auto rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                                 style="width:28px;height:28px;font-size:.7rem;
+                                                         background:{% if order.status == s.0 %}#1A56A0;color:#fff{% else %}#e9ecef;color:#666{% endif %};">
+                                                {{ forloop.counter }}
+                                            </div>
+                                            <small class="d-block text-muted mt-1"
+                                                   style="font-size:.65rem;">{{ s.1 }}</small>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endwith %}
+                    {% endwith %}
+                </div>
+            {% elif not_found %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    No order found with code <strong>{{ code }}</strong>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

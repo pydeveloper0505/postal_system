@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Login – UzPost{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-5 col-lg-4">
+            <div class="card p-4 mt-5">
+                <h3 class="text-center mb-4 fw-bold text-primary"><i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">{{ field.errors.as_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <button class="btn btn-primary w-100 py-2 mt-2">Login</button>
+                </form>
+                <p class="text-center mt-3 text-muted">
+                    No account? <a href="{% url 'users:register' %}">Register</a>
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

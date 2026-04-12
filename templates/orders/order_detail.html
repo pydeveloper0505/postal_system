@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Order {{ order.tracking_code }}{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold"><i class="bi bi-box me-2 text-primary"></i>Order Detail</h4>
+        <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left: Main Info -->
+        <div class="col-md-7">
+            <div class="card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="text-muted small">Tracking Code</span>
+                        <h5 class="fw-bold text-primary mb-0">{{ order.tracking_code }}</h5>
+                    </div>
+                    <span class="badge bg-{{ order.get_status_badge }} fs-6">{{ order.get_status_display }}</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <small class="text-muted">Receiver</small>
+                        <p class="fw-semibold mb-0">{{ order.receiver_name }}</p>
+                        <small class="text-muted">{{ order.receiver_phone }}</small>
+                    </div>
+                    <div class="col-6">
+                        <p class="fw-semibold mb-0">{{ order.get_delivery_type_display }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Weight</small>
+                        <p class="fw-semibold mb-0">{{ order.weight }} kg</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Price</small>
+                        <p class="fw-semibold mb-0">{{ order.price|floatformat:0 }} UZS
+                            {% if order.is_paid %}
+                                <span class="badge bg-success ms-1">Paid</span>
+                            {% else %}
+                                <span class="badge bg-danger ms-1">Unpaid</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted">Description</small>
+                        <p class="mb-0">{{ order.description }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Addresses -->
+            <div class="card p-4">
+                <h6 class="fw-bold mb-3">Addresses</h6>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted d-block mb-1"><i
+                                class="bi bi-box-arrow-up-right me-1"></i>Pickup</small>
+                        <p class="mb-0">{{ order.pickup_address.full_address|default:"—" }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block mb-1"><i class="bi bi-box-arrow-in-down-right me-1"></i>Delivery</small>
+                        <p class="mb-0">{{ order.delivery_address.full_address|default:"Branch Pickup" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Status Timeline + Actions -->
+        <div class="col-md-5">
+            <!-- Status Timeline -->
+            <div class="card p-4 mb-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Status Timeline</h6>
+                {% with statuses=order.STATUS_CHOICES %}
+                    <ul class="list-unstyled mb-0">
+                        {% for status_val, status_label in statuses %}
+                            {% if status_val != 'cancelled' %}
+                                <li class="d-flex align-items-center mb-2">
+                                    {% if order.status == status_val %}
+                                        <i class="bi bi-record-circle-fill text-primary me-2 fs-5"></i>
+                                        <span class="fw-bold text-primary">{{ status_label }}</span>
+                                    {% elif order.status == 'delivered' or order.status != status_val %}
+                                        <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+                                        <span class="text-muted">{{ status_label }}</span>
+                                    {% else %}
+                                        <i class="bi bi-circle text-muted me-2 fs-5"></i>
+                                        <span class="text-muted">{{ status_label }}</span>
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% endwith %}
+            </div>
+
+            <!-- Actions -->
+            {% if not order.is_paid and request.user == order.sender %}
+                <a href="{% url 'orders:payment' order.pk %}" class="btn btn-warning w-100 mb-3">
+                    <i class="bi bi-credit-card me-2"></i>Pay Now – {{ order.price|floatformat:0 }} UZS
+                </a>
+            {% endif %}
+
+            {% if order.courier_assignment %}
+                <div class="card p-3">
+                    <small class="text-muted">Assigned Courier</small>
+                    <p class="fw-bold mb-0">{{ order.courier_assignment.courier.get_full_name }}</p>
+                    <small class="text-muted">{{ order.courier_assignment.courier.phone }}</small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

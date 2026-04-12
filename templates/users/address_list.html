@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}My Addresses{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold"><i class="bi bi-geo-alt me-2 text-primary"></i>My Addresses</h4>
+        <a href="{% url 'users:address-add' %}" class="btn btn-primary">
+            <i class="bi bi-plus me-1"></i>Add Address
+        </a>
+    </div>
+    {% if addresses %}
+        <div class="row g-3">
+            {% for addr in addresses %}
+                <div class="col-md-6">
+                    <div class="card p-3 h-100 {% if addr.is_default %}border-primary{% endif %}">
+                        {% if addr.is_default %}
+                            <span class="badge bg-primary mb-2">Default</span>
+                        {% endif %}
+                        <h6 class="fw-bold">{{ addr.title }}</h6>
+                        <p class="text-muted mb-0">{{ addr.full_address }}</p>
+                        {% if addr.zip_code %}<small class="text-muted">ZIP: {{ addr.zip_code }}</small>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">No addresses yet. <a href="{% url 'users:address-add' %}">Add one</a>.</div>
+    {% endif %}
+{% endblock %}
